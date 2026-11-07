@@ -74,10 +74,12 @@ a { color: var(--orange); }
 .logo::after { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--bg); }
 .icone-btn { min-width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; cursor: pointer; font-size: 19px; }
 .nav-haut { display: none; }
-.nav-bas { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--nav); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px 4px calc(8px + env(safe-area-inset-bottom, 0px)); }
+.nav-bas { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--nav); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(6, 1fr); padding: 6px 4px calc(8px + env(safe-area-inset-bottom, 0px)); }
 .nav-bas button, .nav-haut button { border: 0; background: none; cursor: pointer; color: var(--muted); font-weight: 700; }
 .nav-bas button { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12.5px; padding: 2px 0; }
-.nav-bas svg { width: 48px; height: 30px; padding: 4px 13px; border-radius: 15px; }
+.nav-bas svg { width: 44px; height: 30px; padding: 4px 11px; border-radius: 15px; }
+.bloc-mom ul, .bloc-mom ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.bloc-mom > p { margin: 0; }
 .nav-bas button[aria-current="page"] { color: var(--ink); }
 .nav-bas button[aria-current="page"] svg { background: var(--g-onglet); color: #211C35; }
 @media (min-width: 900px) {
@@ -316,6 +318,7 @@ table.grille sup { font-size: 10px; color: var(--muted); }
     <section class="vue" id="vue-nom" aria-label="Analyse d'un nom" hidden></section>
     <section class="vue" id="vue-entente" aria-label="Compatibilité" hidden></section>
     <section class="vue" id="vue-guide" aria-label="Guide des chiffres" hidden></section>
+    <section class="vue" id="vue-aide" aria-label="Mode d'emploi" hidden></section>
     <section class="vue" id="vue-personnes" aria-label="Mes personnes" hidden></section>
   </main>
 </div>
@@ -1237,13 +1240,14 @@ table.grille sup { font-size: 10px; color: var(--muted); }
   /* ===== Petits gabarits ===== */
   const COUL = ["t-o", "t-g", "t-r", "t-y"];
   const ICONES = {
+    aide: '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.6V14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.2" r="1.2" fill="currentColor"/>',
     profil: '<circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
     moments: '<rect x="3.5" y="5" width="17" height="15.5" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="15" r="2" fill="currentColor"/>',
     nom: '<path d="M3 19 8 5l5 14M4.8 14h6.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 12.5c.6-1 1.6-1.5 2.8-1.5 1.8 0 2.7 1 2.7 2.7V19M20.5 15.5h-2.6c-1.5 0-2.6.8-2.6 1.9 0 1 .8 1.7 2 1.7 1.7 0 3.2-1.3 3.2-3.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
     entente: '<circle cx="9" cy="12" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="15" cy="12" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/>',
     guide: '<path d="M4 5.5c2.5-1 5.5-1 8 .5 2.5-1.5 5.5-1.5 8-.5V19c-2.5-1-5.5-1-8 .5-2.5-1.5-5.5-1.5-8-.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 6v13.5" stroke="currentColor" stroke-width="2"/>'
   };
-  const VUES = [["profil", "Profil", "Profil"], ["moments", "Moments", "Moments favorables"], ["nom", "Nom", "Analyse d'un nom"], ["entente", "Entente", "Compatibilité"], ["guide", "Guide", "Guide des chiffres"]];
+  const VUES = [["profil", "Profil", "Profil"], ["moments", "Moments", "Moments"], ["nom", "Nom", "Nom"], ["entente", "Entente", "Entente"], ["guide", "Guide", "Guide"], ["aide", "Aide", "Mode d'emploi"]];
   const phraseSens = (n) => {
     const b = base(n);
     let t = "Le " + b + " correspond " + SENS[b].corr + ", " + SENS[b].sous + ".";
@@ -1771,6 +1775,21 @@ table.grille sup { font-size: 10px; color: var(--muted); }
     el.innerHTML = h;
   }
 
+
+  /* ===== Vue Mode d'emploi (onglet Aide) ===== */
+  function vueAide() {
+    const el = document.getElementById("vue-aide");
+    const part = (coul, titre, corps) => '<section class="bloc-mom"><div class="bloc-tete"><span class="bloc-ico" style="background:' + coul + '"></span><div><h2>' + titre + "</h2></div></div>" + corps + "</section>";
+    let h = '<h1>Mode d\'emploi</h1><p class="sous-titre">Tout ce qu\'il faut savoir pour utiliser l\'appli, en six étapes simples.</p>';
+    h += part("var(--g-chaud)", "1. Ouvrir l'appli", "<p>Deux façons au choix, sans compte et sans rien installer :</p><ul><li><b>Par le lien internet</b> : <a href=\"https://cmcsentienthal.github.io/nombres-de-la-vie/\" target=\"_blank\" rel=\"noopener\">cmcsentienthal.github.io/nombres-de-la-vie</a>. L'appli s'ouvre dans votre navigateur, sur téléphone comme sur ordinateur. Gardez ce lien pour revenir.</li><li><b>Par Mega</b> : téléchargez l'appli depuis le lien Mega reçu, puis ouvrez le fichier.</li></ul>");
+    h += part("var(--g-onglet)", "2. Créer votre fiche", "<ol><li>Touchez <b>Créer ma fiche</b>.</li><li>Remplissez <b>Tous les prénoms de l'état civil</b> (dans l'ordre de votre acte de naissance), le <b>Nom de naissance</b> (le nom de jeune fille pour une femme mariée) et la <b>Date de naissance</b>.</li><li>Si vous le souhaitez, ajoutez le <b>Prénom usuel</b>, le <b>Nom d'usage ou de mariage</b> et la <b>Date du mariage</b>. Ces cases ne sont pas obligatoires.</li><li>Touchez <b>Enregistrer la personne</b>.</li></ol><p>Pour corriger plus tard, touchez <b>Modifier la fiche</b>.</p>");
+    h += part("var(--g-vert)", "3. Lire votre profil", "<p>Tout se lit en touchant : ce qui est coloré ou fléché s'ouvre.</p><ul><li><b>La grande carte colorée en haut</b> : votre chemin de vie, le nombre le plus important, avec son calcul.</li><li><b>Les titres avec une petite flèche</b> : touchez-les pour lire le texte, touchez à nouveau pour refermer.</li><li><b>Les tuiles de couleur</b> : chacune est un de vos autres nombres. Touchez une tuile pour lire son explication, puis <b>Refermer</b>.</li><li><b>La frise des âges</b> : les grandes périodes de votre vie, avec un repère à votre âge actuel.</li><li><b>Copier le résumé</b> ou <b>Copier tout le portrait</b> : copie le texte, à coller dans un SMS, un mail ou un document.</li></ul>");
+    h += part("var(--g-bouton)", "4. Les autres onglets", "<p>Les onglets sont en bas de l'écran sur téléphone, en haut sur ordinateur.</p><ul><li><b>Moments</b> : choisissez l'événement et les dates <b>Du</b> et <b>Au</b>. Touchez un mois pour voir ses jours, puis un jour pour voir ses heures.</li><li><b>Nom</b> : tapez un nom, puis touchez <b>Entreprise, association, projet</b> ou <b>Autre nom</b>.</li><li><b>Entente</b> : avec deux fiches enregistrées, choisissez <b>Personne 1</b> et <b>Personne 2</b>.</li><li><b>Guide</b> : touchez un chiffre de 0 à 9 pour lire son sens.</li></ul><p>Dans <b>Moments</b>, les couleurs disent tout :</p>" + '<div class="leg"><span><i class="etat e-f">✓</i>Favorable</span><span><i class="etat e-n">–</i>Neutre</span><span><i class="etat e-e">✕</i>À éviter</span><span><b class="etoile">★</b> même nombre que votre chemin de vie</span></div>' + "<p>En bas de l'onglet, la liste <b>Meilleurs jours de toute la période</b> donne les dates à retenir.</p>");
+    h += part("linear-gradient(var(--yellow), var(--green))", "5. Plusieurs personnes, fond clair ou sombre", "<ul><li><b>Les prénoms en haut de page</b> : touchez-en un pour afficher sa fiche.</li><li><b>+ Ajouter</b> : crée une nouvelle fiche.</li><li><b>Gérer</b> : permet de <b>Modifier</b> ou de <b>Supprimer</b> une fiche.</li><li><b>Le bouton rond en haut à droite</b> : passe du fond clair au ciel étoilé, et inversement. L'appli retient votre choix.</li></ul>");
+    h += part("var(--g-chaud)", "6. Bon à savoir", "<p>Vos fiches restent sur votre appareil : rien n'est envoyé sur Internet.</p><ul><li><b>Un seul appareil</b> : les fiches sont gardées dans le navigateur où vous les avez créées. Le lien et le fichier gardent chacun les leurs.</li><li><b>Navigation privée</b> : les fiches disparaissent quand vous fermez la fenêtre.</li><li><b>Effacer les données du navigateur</b> efface aussi vos fiches.</li><li><b>Réglages du calcul</b> : dans <b>Gérer</b>. Vous n'avez pas besoin d'y toucher.</li><li><b>Un souci ?</b> Rouvrez l'appli, ou demandez à Christine-Marie.</li></ul>");
+    el.innerHTML = h;
+  }
+
   /* ===== Vue Personnes ===== */
   function vuePersonnes() {
     const el = document.getElementById("vue-personnes"), ed = E.edition ? pers(E.edition) : null;
@@ -1806,12 +1825,12 @@ table.grille sup { font-size: 10px; color: var(--muted); }
     document.getElementById("nav-haut").innerHTML = VUES.map((x) => btn(x[0]) + x[2] + "</button>").join("");
   }
   function afficher(v, forcer) {
-    if (!["profil", "moments", "nom", "entente", "guide", "personnes"].includes(v)) { v = "profil"; }
+    if (!["profil", "moments", "nom", "entente", "guide", "aide", "personnes"].includes(v)) { v = "profil"; }
     VUE = v;
     document.querySelectorAll(".vue").forEach((s) => { s.hidden = s.id !== "vue-" + v; });
     rendreBarre(); rendreNav();
     if (v === "profil") { vueProfil(); } else if (v === "moments") { vueMoments(forcer); } else if (v === "nom") { vueNom(forcer); }
-    else if (v === "entente") { vueEntente(); } else if (v === "guide") { vueGuide(); } else { vuePersonnes(); }
+    else if (v === "entente") { vueEntente(); } else if (v === "guide") { vueGuide(); } else if (v === "aide") { vueAide(); } else { vuePersonnes(); }
   }
   function aller(v) {
     if (location.hash !== "#" + v) { try { history.replaceState(null, "", "#" + v); } catch (e) { /* rien */ } }
