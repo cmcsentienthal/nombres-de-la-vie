@@ -1056,6 +1056,18 @@ table.grille sup { font-size: 10px; color: var(--muted); }
   }
   const deux = (n) => (n < 10 ? "0" : "") + n;
   const fmt = (d) => deux(d.j) + "/" + deux(d.m) + "/" + d.a;
+  // Saisie au clavier : "JJ/MM/AAAA" <-> stockage "AAAA-MM-JJ"
+  function versIso(s) {
+    s = String(s || "").trim();
+    if (!s) { return ""; }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) { return parseDate(s) ? s : null; }
+    let m = /^(\d{1,2})\D+(\d{1,2})\D+(\d{4})$/.exec(s) || /^(\d{2})(\d{2})(\d{4})$/.exec(s);
+    if (!m) { return null; }
+    const j = +m[1], mo = +m[2], a = +m[3];
+    if (a < 1 || mo < 1 || mo > 12 || j < 1 || j > new Date(a, mo, 0).getDate()) { return null; }
+    return a + "-" + deux(mo) + "-" + deux(j);
+  }
+  const versFr = (iso) => { const d = parseDate(iso); return d ? fmt(d) : ""; };
   function ageA(nais, date) {
     let age = date.getFullYear() - nais.a;
     if (date.getMonth() + 1 < nais.m || (date.getMonth() + 1 === nais.m && date.getDate() < nais.j)) { age -= 1; }
@@ -1579,14 +1591,14 @@ table.grille sup { font-size: 10px; color: var(--muted); }
       el.innerHTML = '<h1>Moments favorables</h1><p class="sous-titre">Pour <b id="mom-qui"></b>. Changez de personne avec les boutons en haut de page.</p>' +
         '<div class="carte" id="mom-form"><div class="champ"><span class="lbl">Pour quel événement ?</span><div class="puces" id="mom-ev">' +
         Object.keys(EVENEMENTS).map((k) => '<button type="button" class="puce" data-ev="' + k + '" aria-pressed="false">' + esc(EVENEMENTS[k].nom) + "</button>").join("") + "</div></div>" +
-        '<div class="duo"><div class="champ"><label for="mom-du">Du</label><input type="date" id="mom-du"></div><div class="champ"><label for="mom-au">Au</label><input type="date" id="mom-au"></div></div>' +
+        '<div class="duo"><div class="champ"><label for="mom-du">Du</label><input type="text" inputmode="numeric" class="date-saisie" placeholder="JJ/MM/AAAA" maxlength="10" autocomplete="off" id="mom-du"></div><div class="champ"><label for="mom-au">Au</label><input type="text" inputmode="numeric" class="date-saisie" placeholder="JJ/MM/AAAA" maxlength="10" autocomplete="off" id="mom-au"></div></div>' +
         '<div class="champ" id="mom-cj-champ"><label for="mom-cj">Conjoint (facultatif, méthode The Knot)</label><select id="mom-cj"></select></div></div>' +
         '<div id="mom-res" class="col"></div>';
     }
     document.getElementById("mom-qui").textContent = p ? nomComplet(p) : "personne";
     el.querySelectorAll("[data-ev]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.ev === E.mom.ev)));
-    document.getElementById("mom-du").value = E.mom.du;
-    document.getElementById("mom-au").value = E.mom.au;
+    document.getElementById("mom-du").value = versFr(E.mom.du);
+    document.getElementById("mom-au").value = versFr(E.mom.au);
     const sel = document.getElementById("mom-cj");
     sel.innerHTML = '<option value="">Aucun</option>' + E.personnes.filter((q) => q.id !== E.courant).map((q) => '<option value="' + esc(q.id) + '">' + esc(nomComplet(q)) + "</option>").join("");
     if (!E.mom.conjoint && p && p.conjoint) { E.mom.conjoint = p.conjoint; }
@@ -1782,7 +1794,7 @@ table.grille sup { font-size: 10px; color: var(--muted); }
     const part = (coul, titre, corps) => '<section class="bloc-mom"><div class="bloc-tete"><span class="bloc-ico" style="background:' + coul + '"></span><div><h2>' + titre + "</h2></div></div>" + corps + "</section>";
     let h = '<h1>Mode d\'emploi</h1><p class="sous-titre">Tout ce qu\'il faut savoir pour utiliser l\'appli, en six étapes simples.</p>';
     h += part("var(--g-chaud)", "1. Ouvrir l'appli", "<p>Deux façons au choix, sans compte et sans rien installer :</p><ul><li><b>Par le lien internet</b> : <a href=\"https://cmcsentienthal.github.io/nombres-de-la-vie/\" target=\"_blank\" rel=\"noopener\">cmcsentienthal.github.io/nombres-de-la-vie</a>. L'appli s'ouvre dans votre navigateur, sur téléphone comme sur ordinateur. Gardez ce lien pour revenir.</li><li><b>Par Mega</b> : téléchargez l'appli depuis le lien Mega reçu, puis ouvrez le fichier.</li></ul>");
-    h += part("var(--g-onglet)", "2. Créer votre fiche", "<ol><li>Touchez <b>Créer ma fiche</b>.</li><li>Remplissez <b>Tous les prénoms de l'état civil</b> (dans l'ordre de votre acte de naissance), le <b>Nom de naissance</b> (le nom de jeune fille pour une femme mariée) et la <b>Date de naissance</b>.</li><li>Si vous le souhaitez, ajoutez le <b>Prénom usuel</b>, le <b>Nom d'usage ou de mariage</b> et la <b>Date du mariage</b>. Ces cases ne sont pas obligatoires.</li><li>Touchez <b>Enregistrer la personne</b>.</li></ol><p>Pour corriger plus tard, touchez <b>Modifier la fiche</b>.</p>");
+    h += part("var(--g-onglet)", "2. Créer votre fiche", "<ol><li>Touchez <b>Créer ma fiche</b>.</li><li>Remplissez <b>Tous les prénoms de l'état civil</b> (dans l'ordre de votre acte de naissance), le <b>Nom de naissance</b> (le nom de jeune fille pour une femme mariée) et la <b>Date de naissance</b>, à taper au clavier (par exemple 05031980 pour le 5 mars 1980).</li><li>Si vous le souhaitez, ajoutez le <b>Prénom usuel</b>, le <b>Nom d'usage ou de mariage</b> et la <b>Date du mariage</b>. Ces cases ne sont pas obligatoires.</li><li>Touchez <b>Enregistrer la personne</b>.</li></ol><p>Pour corriger plus tard, touchez <b>Modifier la fiche</b>.</p>");
     h += part("var(--g-vert)", "3. Lire votre profil", "<p>Tout se lit en touchant : ce qui est coloré ou fléché s'ouvre.</p><ul><li><b>La grande carte colorée en haut</b> : votre chemin de vie, le nombre le plus important, avec son calcul.</li><li><b>Les titres avec une petite flèche</b> : touchez-les pour lire le texte, touchez à nouveau pour refermer.</li><li><b>Les tuiles de couleur</b> : chacune est un de vos autres nombres. Touchez une tuile pour lire son explication, puis <b>Refermer</b>.</li><li><b>La frise des âges</b> : les grandes périodes de votre vie, avec un repère à votre âge actuel.</li><li><b>Copier le résumé</b> ou <b>Copier tout le portrait</b> : copie le texte, à coller dans un SMS, un mail ou un document.</li></ul>");
     h += part("var(--g-bouton)", "4. Les autres onglets", "<p>Les onglets sont en bas de l'écran sur téléphone, en haut sur ordinateur.</p><ul><li><b>Moments</b> : choisissez l'événement et les dates <b>Du</b> et <b>Au</b>. Touchez un mois pour voir ses jours, puis un jour pour voir ses heures.</li><li><b>Nom</b> : tapez un nom, puis touchez <b>Entreprise, association, projet</b> ou <b>Autre nom</b>.</li><li><b>Entente</b> : avec deux fiches enregistrées, choisissez <b>Personne 1</b> et <b>Personne 2</b>.</li><li><b>Guide</b> : touchez un chiffre de 0 à 9 pour lire son sens.</li></ul><p>Dans <b>Moments</b>, les couleurs disent tout :</p>" + '<div class="leg"><span><i class="etat e-f">✓</i>Favorable</span><span><i class="etat e-n">–</i>Neutre</span><span><i class="etat e-e">✕</i>À éviter</span><span><b class="etoile">★</b> même nombre que votre chemin de vie</span></div>' + "<p>En bas de l'onglet, la liste <b>Meilleurs jours de toute la période</b> donne les dates à retenir.</p>");
     h += part("linear-gradient(var(--yellow), var(--green))", "5. Plusieurs personnes, fond clair ou sombre", "<ul><li><b>Les prénoms en haut de page</b> : touchez-en un pour afficher sa fiche.</li><li><b>+ Ajouter</b> : crée une nouvelle fiche.</li><li><b>Gérer</b> : permet de <b>Modifier</b> ou de <b>Supprimer</b> une fiche.</li><li><b>Le bouton rond en haut à droite</b> : passe du fond clair au ciel étoilé, et inversement. L'appli retient votre choix.</li></ul>");
@@ -1800,11 +1812,11 @@ table.grille sup { font-size: 10px; color: var(--muted); }
     h += '<form class="carte" id="form-pers" autocomplete="off"><h2>' + (ed ? "Modifier la fiche" : "Ajouter une personne") + "</h2>" +
       '<div class="champ"><label for="f-prenoms">Tous les prénoms de l\'état civil</label><input type="text" id="f-prenoms" required value="' + esc(f.prenoms) + '"><p class="aide">Dans l\'ordre de l\'acte de naissance, séparés par une virgule. Un prénom composé garde son trait d\'union.</p></div>' +
       '<div class="champ"><label for="f-nom">Nom de naissance</label><input type="text" id="f-nom" required value="' + esc(f.nom) + '"></div>' +
-      '<div class="champ"><label for="f-naissance">Date de naissance</label><input type="date" id="f-naissance" required value="' + esc(f.naissance) + '"></div>' +
+      '<div class="champ"><label for="f-naissance">Date de naissance</label><input type="text" inputmode="numeric" class="date-saisie" placeholder="JJ/MM/AAAA" maxlength="10" autocomplete="off" id="f-naissance" required value="' + esc(versFr(f.naissance)) + '"><p class="aide">À taper au clavier, par exemple 05031980 : les barres s\'ajoutent toutes seules.</p></div>' +
       '<details class="volet"><summary><span class="g"><span class="pastille" style="background:var(--yellow)"></span>Facultatif : prénom usuel, mariage, nom d\'usage</span></summary><div class="corps">' +
       '<div class="champ"><label for="f-usuel">Prénom usuel</label><input type="text" id="f-usuel" value="' + esc(f.usuel) + '"><p class="aide">Si la personne utilise un autre prénom que le premier.</p></div>' +
       '<div class="champ"><label for="f-nomusage">Nom d\'usage ou de mariage</label><input type="text" id="f-nomusage" value="' + esc(f.nomUsage) + '"></div>' +
-      '<div class="champ"><label for="f-mariage">Date du mariage</label><input type="date" id="f-mariage" value="' + esc(f.mariage) + '"></div>' +
+      '<div class="champ"><label for="f-mariage">Date du mariage</label><input type="text" inputmode="numeric" class="date-saisie" placeholder="JJ/MM/AAAA" maxlength="10" autocomplete="off" id="f-mariage" value="' + esc(versFr(f.mariage)) + '"></div>' +
       '<div class="champ"><label for="f-conjoint">Conjoint</label><select id="f-conjoint"><option value="">Aucun</option>' + E.personnes.filter((q) => !ed || q.id !== ed.id).map((q) => '<option value="' + esc(q.id) + '"' + (q.id === f.conjoint ? " selected" : "") + ">" + esc(nomComplet(q)) + "</option>").join("") + "</select></div></div></details>" +
       '<div class="boutons"><button type="submit" class="bouton">' + (ed ? "Enregistrer les modifications" : "Enregistrer la personne") + "</button>" + (ed ? '<button type="button" class="bouton second" data-action="annuler">Annuler</button><button type="button" class="bouton danger" data-action="supprimer" data-id="' + esc(ed.id) + '">Supprimer</button>' : "") + '</div><p class="etat-msg" id="msg-pers" role="status"></p></form>';
     h += '<div class="carte"><h2>Réglages du calcul</h2><label class="case-coche" for="r-maitres"><input type="checkbox" id="r-maitres"' + (E.reglages.maitres ? " checked" : "") + "><span>Conserver les maîtres-nombres 11, 22 et 33 (méthode Decoz)</span></label>" +
@@ -1946,8 +1958,11 @@ table.grille sup { font-size: 10px; color: var(--muted); }
   }
   function enregistrerPersonne() {
     const g = (id) => document.getElementById(id).value.trim();
-    const d = { prenoms: g("f-prenoms"), nom: g("f-nom"), naissance: g("f-naissance"), usuel: g("f-usuel"), nomUsage: g("f-nomusage"), mariage: g("f-mariage"), conjoint: document.getElementById("f-conjoint").value };
-    if (!lettres(d.prenoms) || !lettres(d.nom) || !parseDate(d.naissance)) { document.getElementById("msg-pers").textContent = "Indiquez au moins les prénoms, le nom de naissance et la date de naissance."; return; }
+    const d = { prenoms: g("f-prenoms"), nom: g("f-nom"), naissance: versIso(g("f-naissance")), usuel: g("f-usuel"), nomUsage: g("f-nomusage"), mariage: versIso(g("f-mariage")), conjoint: document.getElementById("f-conjoint").value };
+    const msg = document.getElementById("msg-pers");
+    if (!lettres(d.prenoms) || !lettres(d.nom) || !g("f-naissance")) { msg.textContent = "Indiquez au moins les prénoms, le nom de naissance et la date de naissance."; return; }
+    if (!d.naissance) { msg.textContent = "Date de naissance non reconnue. Écrivez-la sous la forme JJ/MM/AAAA, par exemple 05/03/1980."; document.getElementById("f-naissance").focus(); return; }
+    if (d.mariage === null) { msg.textContent = "Date du mariage non reconnue. Écrivez-la sous la forme JJ/MM/AAAA, ou laissez la case vide."; document.getElementById("f-mariage").focus(); return; }
     if (E.edition && pers(E.edition)) { Object.assign(pers(E.edition), d); E.courant = E.edition; }
     else { const id = "p" + Date.now().toString(36); E.personnes.push(Object.assign({ id }, d)); E.courant = id; }
     E.edition = null; sauver(); aller("profil");
@@ -2008,11 +2023,26 @@ table.grille sup { font-size: 10px; color: var(--muted); }
   document.addEventListener("input", (ev) => {
     const id = ev.target.id;
     if (id === "nom-texte") { E.nom.texte = ev.target.value; resultatsNom(); }
+    if (ev.target.classList && ev.target.classList.contains("date-saisie")) {
+      const t = ev.target;
+      if (!/^delete/.test(ev.inputType || "") && t.selectionStart === t.value.length) {
+        const c = t.value.replace(/\D/g, "").slice(0, 8);
+        t.value = c.length > 4 ? c.slice(0, 2) + "/" + c.slice(2, 4) + "/" + c.slice(4) : (c.length > 2 ? c.slice(0, 2) + "/" + c.slice(2) : c);
+      }
+      const iso = versIso(t.value);
+      if ((id === "mom-du" || id === "mom-au") && iso && t.value.length === 10) {
+        if (id === "mom-du") { E.mom.du = iso; } else { E.mom.au = iso; }
+        E.mom.mois = ""; E.mom.jour = ""; resultatsMoments();
+      }
+    }
   });
   document.addEventListener("change", (ev) => {
     const id = ev.target.id;
-    if (id === "mom-du") { E.mom.du = ev.target.value; E.mom.mois = ""; E.mom.jour = ""; resultatsMoments(); }
-    else if (id === "mom-au") { E.mom.au = ev.target.value; E.mom.mois = ""; E.mom.jour = ""; resultatsMoments(); }
+    if (id === "mom-du" || id === "mom-au") {
+      const iso = versIso(ev.target.value);
+      if (iso) { if (id === "mom-du") { E.mom.du = iso; } else { E.mom.au = iso; } E.mom.mois = ""; E.mom.jour = ""; resultatsMoments(); ev.target.value = versFr(iso); }
+      else { ev.target.value = versFr(id === "mom-du" ? E.mom.du : E.mom.au); }
+    }
     else if (id === "mom-cj") { E.mom.conjoint = ev.target.value; resultatsMoments(); }
     else if (id === "ent-a") { E.ent.a = ev.target.value; vueEntente(); }
     else if (id === "ent-b") { E.ent.b = ev.target.value; vueEntente(); }
