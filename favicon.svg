@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="fond" x1="0" y1="512" x2="512" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#FFD21F"/>
+      <stop offset="50%"  stop-color="#FF9A1F"/>
+      <stop offset="100%" stop-color="#F0712A"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#fond)"/>
+
+  <!-- Le chiffre 5, dessine en traces plutot qu'en texte : un <text> dependrait
+       des polices installees chez le visiteur. Trait de 46 px, bouts arrondis.
+       L'ensemble tient dans un cadre de 200x260 centre, donc dans le cercle
+       central de 80 % exige par les icones maskable. -->
+  <!-- translate(-6,-8) : variante petites tailles : trait de 58 px. Recentrage idem
+       pour un centre d'icone a (256,256). -->
+  <g fill="none" stroke="#149A6B" stroke-width="58"
+     stroke-linecap="round" stroke-linejoin="round" transform="translate(-6,-8)">
+    <!-- barre du haut -->
+    <path d="M 183 149 H 340"/>
+    <!-- montant gauche -->
+    <path d="M 183 149 V 244"/>
+    <!-- panse : part vers la droite, descend, revient vers la gauche -->
+    <path d="M 183 244 H 262 a 71 71 0 1 1 -62 128"/>
+  </g>
+</svg>
